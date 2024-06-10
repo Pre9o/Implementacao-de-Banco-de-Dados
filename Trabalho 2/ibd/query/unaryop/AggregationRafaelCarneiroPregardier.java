@@ -196,11 +196,9 @@ public class AggregationRafaelCarneiroPregardier extends UnaryOperation {
                     continue;
                 }
 
-
                 // get the values for the groupByColumn and aggregateColumn
                 Comparable groupByValue = getValue(tp, groupByColumn);
                 Comparable aggregateValue = getValue(tp, aggregateColumn);
-
 
 
                 if (currentGroupByValue != null && !currentGroupByValue.equals(groupByValue) || !tuples.hasNext()) {

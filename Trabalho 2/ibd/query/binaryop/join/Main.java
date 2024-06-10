@@ -128,9 +128,9 @@ public class Main {
         terms.addTerm("id", "id");
 
 
-        Operation join1 = new NestedLoopJoin(funcScan, addressScan, terms);
-        Operation join2 = new NestedLoopJoin(phoneScan, socialInfoScan, terms);
-        Operation join = new NestedLoopJoin(join1, join2, terms);
+        Operation join1 = new NestedLoopJoin(funcScan, phoneScan, terms);
+        Operation join2 = new NestedLoopJoin(join1, addressScan, terms);
+        Operation join = new NestedLoopJoin(join2, socialInfoScan, terms);
 
         return join;
 
@@ -141,7 +141,7 @@ public class Main {
             Main m = new Main();
 
             boolean override = false;
-            m.prepareTables("c:\\teste\\ibd", 4096, 200, override);
+            m.prepareTables("C:\\Users\\naoca\\Documents\\GitHub\\Implementacao-de-Banco-de-Dados\\Trabalho 2\\ibd", 4096, 200, override);
             Operation query = m.createQuery();
             
             System.out.println("Tree:");
