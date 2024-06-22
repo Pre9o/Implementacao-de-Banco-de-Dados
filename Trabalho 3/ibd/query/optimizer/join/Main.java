@@ -260,7 +260,7 @@ public class Main {
             QueryOptimizer opt = new RafaelCarneiroPregardierQueryOptimizer();
 
             DataLoader loader = new DataLoader();
-            boolean recreate = false;
+            boolean recreate = true;
             if (recreate) loader.recreate();
             else loader.loadData();
 

@@ -6,13 +6,12 @@
 package ibd.query.optimizer.join;
 
 import ibd.query.Operation;
+import ibd.query.binaryop.join.Join;
 import ibd.query.binaryop.join.JoinPredicate;
 import ibd.query.binaryop.join.NestedLoopJoin;
 import ibd.query.binaryop.join.JoinTerm;
 import ibd.query.sourceop.FullTableScan;
 
-import javax.management.Query;
-import java.sql.SQLOutput;
 import java.util.*;
 
 /**
@@ -58,38 +57,74 @@ public class RafaelCarneiroPregardierQueryOptimizer implements QueryOptimizer{
                 }
             }
             if (!hasIncomingEdge) {
-                return v; // Retorna o vértice que não tem nenhuma aresta chegando a ele
+                return v;
             }
         }
-        return null; // Retorna null se todos os vértices têm pelo menos uma aresta chegando a eles
+        return null;
     }
 
+
+    private Vertex findStartVertex() throws Exception {
+        Vertex startVertex = findVertexWithNoIncomingEdges();
+        if (startVertex == null) {
+            throw new Exception("No vertex with no incoming edges found");
+        }
+        return startVertex;
+    }
+
+
+    private JoinPredicate createJoinPredicate(Edge edge, Vertex vertex, boolean secondJoin) {
+        JoinPredicate terms = new JoinPredicate();
+
+        if (!secondJoin) {
+            for (JoinTerm jt : edge.terms) {
+                if (jt.getLeftTableAlias().equals(vertex.toString())) {
+                    terms.addTerm(jt.getLeftTableAlias(), jt.getLeftColumn(), jt.getRightTableAlias(), jt.getRightColumn());
+                } else {
+                    terms.addTerm(jt.getRightTableAlias(), jt.getRightColumn(), jt.getLeftTableAlias(), jt.getLeftColumn());
+                }
+            }
+        } else {
+            for (JoinTerm jt : edge.terms) {
+                if (jt.getRightTableAlias().equals(edge.destination.toString())) {
+                    terms.addTerm(jt.getLeftTableAlias(), jt.getLeftColumn(), jt.getRightTableAlias(), jt.getRightColumn());
+                } else {
+                    terms.addTerm(jt.getRightTableAlias(), jt.getRightColumn(), jt.getLeftTableAlias(), jt.getLeftColumn());
+                }
+            }
+        }
+        return terms;
+    }
+
+
+    private JoinPredicate processEdges(Operation lastJoin, Edge e) {
+            for (Iterator<Edge> it3 = e.destination.getEdges(); it3.hasNext(); ) {
+                Edge e2 = it3.next();
+                if (!edges.contains(e2)) {
+                    edges.add(e2);
+                }
+            }
+
+        return createJoinPredicate(e, e.destination, true);
+    }
+
+    
     @Override
     public Operation optimizeQuery(Operation query) throws Exception {
         buildGraph(query);
         Operation lastJoin = null;
 
-        Vertex startVertex = findVertexWithNoIncomingEdges();
-        if (startVertex == null) {
-            throw new Exception("No vertex with no incoming edges found");
-        }
+        Vertex startVertex = findStartVertex();
 
         Iterator<Edge> it = startVertex.getEdges();
         Edge firstEdge = it.next();
+
         while (it.hasNext()) {
             Edge e = it.next();
             edges.add(e);
         }
 
-        JoinPredicate terms = new JoinPredicate();
-        for (JoinTerm jt : firstEdge.terms){
-            if (jt.getLeftTableAlias().equals(startVertex.toString())){
-                terms.addTerm(jt.getLeftTableAlias(), jt.getLeftColumn(), jt.getRightTableAlias(), jt.getRightColumn());
-            }
-            else {
-                terms.addTerm(jt.getRightTableAlias(), jt.getRightColumn(), jt.getLeftTableAlias(), jt.getLeftColumn());
-            }
-        }
+        JoinPredicate terms = createJoinPredicate(firstEdge, startVertex, false);
 
         lastJoin = new NestedLoopJoin(startVertex.getScan(), firstEdge.destination.getScan(), terms);
 
@@ -99,27 +134,14 @@ public class RafaelCarneiroPregardierQueryOptimizer implements QueryOptimizer{
             Edge e = edges.getFirst();
             edges.remove(e);
 
-            for (Iterator<Edge> it3 = e.destination.getEdges(); it3.hasNext(); ) {
-                Edge e2 = it3.next();
-                if (!edges.contains(e2)) {
-                    edges.add(e2);
-                }
-            }
-
-            JoinPredicate terms2 = new JoinPredicate();
-            for (JoinTerm jt : e.terms) {
-                if (jt.getRightTableAlias().equals(e.destination.toString())) {
-                    terms2.addTerm(jt.getLeftTableAlias(), jt.getLeftColumn(), jt.getRightTableAlias(), jt.getRightColumn());
-                } else {
-                    terms2.addTerm(jt.getRightTableAlias(), jt.getRightColumn(), jt.getLeftTableAlias(), jt.getLeftColumn());
-                }
-            }
-
+            JoinPredicate terms2 = processEdges(lastJoin, e);
             lastJoin = new NestedLoopJoin(lastJoin, e.destination.getScan(), terms2);
 
         }
+
         return lastJoin;
     }
+
     private void buildGraph(Operation query) throws Exception {
         buildVertices(query);
         buildEdges(query);
