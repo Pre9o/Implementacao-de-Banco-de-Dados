@@ -129,8 +129,14 @@ public class MainAggregation {
             else
                 table = Directory.getTable("C:\\Users\\naoca\\Documents\\GitHub\\Implementacao-de-Banco-de-Dados\\Trabalho 2\\ibd", "tab1",null, 9999, Table.DEFULT_PAGE_SIZE,  false);
 
+
             //create the query
-            Operation query = m.testGroupByQuery(table, "cidade", "idade", AggregationRafaelCarneiroPregardier.AVG);
+            Operation query = m.testGroupByQuery(table, "cidade", "idade", AggregationRafaelCarneiroPregardier.COUNT);
+            Operation query2 = m.testGroupByQuery(table, "cidade", "idade", AggregationRafaelCarneiroPregardier.SUM);
+            Operation query3 = m.testGroupByQuery(table, "cidade", "idade", AggregationRafaelCarneiroPregardier.AVG);
+            Operation query4 = m.testGroupByQuery(table, "cidade", "idade", AggregationRafaelCarneiroPregardier.MAX);
+            Operation query5 = m.testGroupByQuery(table, "cidade", "idade", AggregationRafaelCarneiroPregardier.MIN);
+
 
             //print the query tree
             TreePrinter printer = new TreePrinter();
@@ -139,6 +145,11 @@ public class MainAggregation {
             //run the query
             TuplesPrinter tuplesPrinter = new TuplesPrinter();
             tuplesPrinter.execQueryAndPrint1(query, -1);
+            tuplesPrinter.execQueryAndPrint1(query2, -1);
+            tuplesPrinter.execQueryAndPrint1(query3, -1);
+            tuplesPrinter.execQueryAndPrint1(query4, -1);
+            tuplesPrinter.execQueryAndPrint1(query5, -1);
+            
 
             //m.run(query
 
